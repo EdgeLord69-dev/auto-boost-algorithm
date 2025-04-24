@@ -104,7 +104,7 @@ def fast_pass(
     :param video_params: custom encoder params for av1an
     :type video_prams: str
     """
-    encoder_params = f'--preset {preset} --crf {crf:.2f} --lp 2 --keyint 0 --scm 0 --fast-decode 1 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1'
+    encoder_params = f'--preset {preset} --crf {crf:.2f} --lp 5 --keyint -1 --fast-decode 2'
     if video_params:  # Only append video_params if it exists and is not None
         encoder_params += f' {video_params}'
 
@@ -113,13 +113,9 @@ def fast_pass(
         '-i', input_file,
         '--temp', tmp_dir,
         '-y',
-	'--verbose',
         '--keep',
-        '-m', 'lsmash',
+        '-m', 'bestsource',
         '-c', 'mkvmerge',
-        '--min-scene-len', '24',
-	'--sc-downscale-height', '720',
-        '--set-thread-affinity', '2',
         '-e', 'svt-av1',
         '--force',
         '-v', encoder_params,
@@ -207,8 +203,8 @@ def calculate_ssimu2(src_file, enc_file, ssimu2_txt_path, ranges, skip):
     if is_vpy:
         exec(open(src_file).read(), globals(), vpy_vars)
     # in order for auto-boost to use a .vpy file as a source, the output clip should be a global variable named clip
-    source_clip = core.lsmas.LWLibavSource(source=src_file, cache=0) if not is_vpy else vpy_vars["clip"]
-    encoded_clip = core.lsmas.LWLibavSource(source=enc_file, cache=0)
+    source_clip = core.bs.VideoSource(source=src_file, cache=0) if not is_vpy else vpy_vars["clip"]
+    encoded_clip = core.bs.VideoSource(source=enc_file, cache=0)
 
     #source_clip = source_clip.resize.Bicubic(format=vs.RGBS, matrix_in_s='709').fmtc.transfer(transs="srgb", transd="linear", bits=32)
     #encoded_clip = encoded_clip.resize.Bicubic(format=vs.RGBS, matrix_in_s='709').fmtc.transfer(transs="srgb", transd="linear", bits=32)
@@ -375,7 +371,7 @@ def generate_zones(ranges: list, percentile_5_total: list, average: int, crf: fl
               f'CRF adjustment: {adjustment:.2f}\n'
               f'Final CRF: {new_crf:.2f}\n')
 
-        zone_params = f"--crf {new_crf:.2f} --lp 2"
+        zone_params = f"--crf {new_crf:.2f} --lp 5 --keyint -1 --fast-decode 2"
         if video_params:  # Only append video_params if it exists and is not None
             zone_params += f' {video_params}'
 
